@@ -65,6 +65,32 @@ public class AuthenticationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<APIResponse<String>> logout(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body(new APIResponse<>(
+                    false,
+                    "Token không hợp lệ hoặc không có token",
+                    null,
+                    HttpStatus.BAD_REQUEST,
+                    null,
+                    LocalDateTime.now()
+            ));
+        }
+        String token = authorization.substring(7);
+        userService.logout(token);
+
+        return ResponseEntity.ok(new APIResponse<>(
+                true,
+                "Đăng xuất thành công",
+                null,
+                HttpStatus.OK,
+                null,
+                LocalDateTime.now()
+        ));
+    }
+
+
     @GetMapping("/profile")
     public ResponseEntity<APIResponse<ProfileResponse>> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {

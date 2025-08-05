@@ -9,6 +9,7 @@ import com.data.project_web_service.model.entity.User;
 public interface UserService {
     User registerUser(UserRegister ur);
     JWTResponse loginUser(UserLogin ul);
+    void logout(String token);
     User verifyPassword(String username, String password);
     String generateOtp();
     JWTResponse verifyOtpAndLogin(OtpRequest request);
@@ -21,4 +22,5 @@ public interface UserService {
     PagedResponse<ProfileResponse> getAllUsers(int page, int size);
     ProfileResponse getUserById(Integer id);
     void deleteUser(Integer id);
+    void updateUserStatus(Integer id, Boolean status);
 }

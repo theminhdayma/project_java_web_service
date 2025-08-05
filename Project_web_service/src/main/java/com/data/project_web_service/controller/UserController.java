@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/v1/admin/user")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     @Autowired
@@ -78,6 +78,28 @@ public class UserController {
         APIResponse<String> response = new APIResponse<>(
                 true,
                 "Xóa người dùng thành công",
+                null,
+                null,
+                null,
+                LocalDateTime.now()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<APIResponse<String>> updateUserStatus(
+            @PathVariable Integer id,
+            @RequestParam Boolean status) {
+
+        if (!status.booleanValue()) {
+            return ResponseEntity.badRequest().body(
+                    new APIResponse<>(false, "Trạng thái không hợp lệ", null, HttpStatus.BAD_REQUEST, null, LocalDateTime.now()));
+        }
+
+        userService.updateUserStatus(id, status);
+        APIResponse<String> response = new APIResponse<>(
+                true,
+                "Cập nhật trạng thái người dùng thành công",
                 null,
                 null,
                 null,

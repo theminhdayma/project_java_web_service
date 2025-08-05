@@ -1,6 +1,5 @@
 package com.data.project_web_service.model.dto.request;
 
-import com.data.project_web_service.model.entity.Role;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,8 +8,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoleDto {
+public class CartItemDto {
     private Integer id;
-    @NotBlank(message = "Role name không được để trống")
-    private Role.RoleName roleName;
+
+    @NotBlank(message = "Số lượng sản phẩm không được để trống")
+    private Integer quantity;
+
+    private Integer userId;
+    private Integer productId;
 }

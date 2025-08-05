@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
@@ -58,15 +56,25 @@ public class UserServiceImp implements UserService {
 
     @Override
     public User registerUser(UserRegister ur) {
-        if (userRepository.existsByUsername(ur.getUsername())) {
+        if(userRepository.existsByUsername(ur.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
 
-        if (userRepository.existsByEmail(ur.getEmail())) {
+        if(userRepository.existsByEmail(ur.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
 
-        List<Role> assignedRoles = mapRoleStringToRole(ur.getRoles());
+        if(ur.getRoles() != null && !ur.getRoles().isEmpty()) {
+            boolean hasOnlyCustomer = ur.getRoles().stream()
+                    .allMatch(r -> r.equalsIgnoreCase("CUSTOMER") || r.equalsIgnoreCase("ROLE_CUSTOMER"));
+            if(!hasOnlyCustomer) {
+                throw new RuntimeException("Chỉ có thể đăng ký với vai trò CUSTOMER");
+            }
+        }
+
+        List<Role> assignedRoles = new ArrayList<>();
+        assignedRoles.add(roleRepository.findRoleByRoleName(Role.RoleName.CUSTOMER)
+                .orElseThrow(() -> new RuntimeException("Role CUSTOMER không tồn tại")));
 
         User user = User.builder()
                 .username(ur.getUsername())
@@ -88,38 +96,6 @@ public class UserServiceImp implements UserService {
         sendOtpEmail(savedUser, otp);
 
         return savedUser;
-    }
-
-
-    private List<Role> mapRoleStringToRole(List<String> roles) {
-        List<Role> roleList = new ArrayList<>();
-        if (roles != null && !roles.isEmpty()) {
-            for (String roleStr : roles) {
-                switch (roleStr.toUpperCase()) {
-                    case "ADMIN":
-                    case "ROLE_ADMIN":
-                        roleList.add(roleRepository.findRoleByRoleName(Role.RoleName.ADMIN)
-                                .orElseThrow(() -> new NoSuchElementException("Không tồn tại role ADMIN")));
-                        break;
-                    case "SALES":
-                    case "ROLE_SALES":
-                        roleList.add(roleRepository.findRoleByRoleName(Role.RoleName.SALES)
-                                .orElseThrow(() -> new NoSuchElementException("Không tồn tại role SALES")));
-                        break;
-                    case "CUSTOMER":
-                    case "ROLE_CUSTOMER":
-                        roleList.add(roleRepository.findRoleByRoleName(Role.RoleName.CUSTOMER)
-                                .orElseThrow(() -> new NoSuchElementException("Không tồn tại role CUSTOMER")));
-                        break;
-                    default:
-                        throw new RuntimeException("Role không hợp lệ: " + roleStr);
-                }
-            }
-        } else {
-            roleList.add(roleRepository.findRoleByRoleName(Role.RoleName.CUSTOMER)
-                    .orElseThrow(() -> new NoSuchElementException("Không tồn tại role CUSTOMER")));
-        }
-        return roleList;
     }
 
     private void sendOtpEmail(User user, String otp) {
@@ -164,6 +140,7 @@ public class UserServiceImp implements UserService {
             return JWTResponse.builder()
                     .username(userDetails.getUsername())
                     .token(token)
+                    .authorities(userDetails.getAuthorities())
                     .email(userDetails.getEmail())
                     .status(userDetails.getStatus())
                     .build();
@@ -172,6 +149,10 @@ public class UserServiceImp implements UserService {
             log.error("Sai username hoặc password: {}", e.getMessage());
             throw new RuntimeException("Username hoặc password không chính xác");
         }
+    }
+
+    @Override
+    public void logout(String token) {
     }
 
 
@@ -387,6 +368,20 @@ public class UserServiceImp implements UserService {
 
         user.setIsDeleted(true);
         user.setDeletedAt(LocalDate.now());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateUserStatus(Integer id, Boolean status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với id: " + id));
+
+        if (user.getRoles().stream().anyMatch(role -> role.getRoleName() == Role.RoleName.ADMIN)) {
+            throw new RuntimeException("Không thể thay đổi trạng thái người dùng có quyền ADMIN");
+        }
+
+        user.setStatus(status);
+        user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
     }
 }

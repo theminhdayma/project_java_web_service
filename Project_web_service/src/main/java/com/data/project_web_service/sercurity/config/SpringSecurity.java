@@ -1,6 +1,5 @@
 package com.data.project_web_service.sercurity.config;
 
-import com.data.project_web_service.model.entity.Role;
 import com.data.project_web_service.sercurity.jwt.JWTAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -61,25 +60,63 @@ public class SpringSecurity {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                        // Public cho phép truy cập đăng ký, đăng nhập
+                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/verify-otp").permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify").hasAnyRole("ADMIN", "CUSTOMER", "SALES")
-
+                        // Profile và đổi mật khẩu, logout
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/profile").hasAnyRole("ADMIN", "CUSTOMER", "SALES")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/auth/profile").hasAnyRole("ADMIN", "CUSTOMER", "SALES")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/auth/change-password").hasAnyRole("ADMIN", "CUSTOMER", "SALES")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").hasAnyRole("ADMIN", "CUSTOMER", "SALES")
 
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").hasAnyRole("ADMIN", "SALES")
-                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasAnyRole("ADMIN", "SALES")
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")  // chỉ admin được xóa
+                        // Quản lý user:
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/users/*/status").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.PUT, "/api/users/*/status").hasRole("ADMIN")
+                        // Danh mục
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasAnyRole("ADMIN", "SALES")
 
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        // Sản phẩm
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasAnyRole("ADMIN", "SALES")
-                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasAnyRole("ADMIN", "SALES")
-                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasAnyRole("ADMIN", "SALES")
+                        // giỏ hàng
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cart-items").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/cart-items").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/cart-items/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/cart-items/**").hasRole("CUSTOMER")
+
+                        // đơn hàng
+                        .requestMatchers(HttpMethod.GET, "/api/v1/orders/**").hasAnyRole("ADMIN", "SALES", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/orders").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/orders/*/status").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/orders/*").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/orders/*").hasRole("ADMIN")
+
+                        // hóa đơn
+                        .requestMatchers(HttpMethod.GET, "/api/v1/invoices/**").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/invoices").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/invoices/*/status").hasAnyRole("ADMIN", "SALES")
+
+                        // hóa đơn theo đơn hàng
+                        .requestMatchers(HttpMethod.GET, "/api/v1/orders/*/invoice").hasAnyRole("ADMIN", "SALES")
+
+                        // Thanh toán
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/payments/*").hasAnyRole("ADMIN", "SALES", "CUSTOMER")
+
+                        // báo cáo thống kê
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reports/sales-summary").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reports/top-products").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reports/revenue").hasAnyRole("ADMIN", "SALES")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reports/inventory").hasAnyRole("ADMIN", "SALES")
 
                         .anyRequest().authenticated()
                 )
@@ -90,5 +127,4 @@ public class SpringSecurity {
 
         return http.build();
     }
-
 }
