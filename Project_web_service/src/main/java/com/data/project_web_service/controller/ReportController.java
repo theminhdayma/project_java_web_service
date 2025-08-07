@@ -23,7 +23,6 @@ public class ReportController {
     @Autowired
     private ReportService reportService;
 
-    // Tổng quan doanh số theo tuần, tháng, quý, năm
     @GetMapping("/sales-summary")
     public ResponseEntity<APIResponse<SalesSummaryDto>> getSalesSummary(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -42,7 +41,6 @@ public class ReportController {
         return ResponseEntity.ok(new APIResponse<>(true, "Thành công", summary, HttpStatus.OK, null, java.time.LocalDateTime.now()));
     }
 
-    // Báo cáo top sản phẩm bán chạy
     @GetMapping("/top-products")
     public ResponseEntity<APIResponse<List<TopProductDto>>> getTopProducts(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -61,7 +59,6 @@ public class ReportController {
         return ResponseEntity.ok(new APIResponse<>(true, "Thành công", list, HttpStatus.OK, null, java.time.LocalDateTime.now()));
     }
 
-    // Báo cáo doanh thu theo khoảng thời gian
     @GetMapping("/revenue")
     public ResponseEntity<APIResponse<RevenueReportDto>> getRevenue(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -83,7 +80,6 @@ public class ReportController {
         return ResponseEntity.ok(new APIResponse<>(true, "Thành công", report, HttpStatus.OK, null, java.time.LocalDateTime.now()));
     }
 
-    // Báo cáo tồn kho
     @GetMapping("/inventory")
     public ResponseEntity<APIResponse<List<InventoryProductDto>>> getInventory(
             @AuthenticationPrincipal CustomUserDetails userDetails) {

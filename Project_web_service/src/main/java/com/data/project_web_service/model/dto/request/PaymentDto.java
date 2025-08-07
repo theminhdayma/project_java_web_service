@@ -22,9 +22,6 @@ public class PaymentDto {
     @NotBlank(message = "Id giao dịch thanh toán không được để trống")
     private String transactionId;
 
-    @NotNull(message = "Số tiền thanh toán không được để trống")
-    private BigDecimal amount;
-
     @NotNull(message = "InvoiceId không được để trống")
     private Integer invoiceId;
 }

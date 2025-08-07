@@ -91,11 +91,6 @@ public class UserController {
             @PathVariable Integer id,
             @RequestParam Boolean status) {
 
-        if (!status.booleanValue()) {
-            return ResponseEntity.badRequest().body(
-                    new APIResponse<>(false, "Trạng thái không hợp lệ", null, HttpStatus.BAD_REQUEST, null, LocalDateTime.now()));
-        }
-
         userService.updateUserStatus(id, status);
         APIResponse<String> response = new APIResponse<>(
                 true,

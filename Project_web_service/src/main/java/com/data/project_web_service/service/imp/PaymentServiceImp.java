@@ -10,6 +10,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 @Transactional
 public class PaymentServiceImp implements PaymentService {
@@ -25,16 +27,16 @@ public class PaymentServiceImp implements PaymentService {
         Invoice invoice = invoiceRepository.findById(dto.getInvoiceId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với id: " + dto.getInvoiceId()));
 
-        // Tạo mới payment
+        BigDecimal amount = invoice.getTotalAmount(); // Lấy trực tiếp từ invoice
+
         Payment payment = Payment.builder()
                 .method(dto.getMethod())
                 .status(dto.getStatus() != null ? dto.getStatus() : Payment.PaymentStatus.PENDING)
                 .transactionId(dto.getTransactionId())
-                .amount(dto.getAmount())
+                .amount(amount)
                 .invoice(invoice)
                 .build();
 
-        // Nếu bạn muốn auto set PAID cho invoice khi payment thành công
         if (payment.getStatus() == Payment.PaymentStatus.SUCCESS) {
             invoice.setStatus(Invoice.InvoiceStatus.PAID);
             invoiceRepository.save(invoice);
@@ -42,6 +44,7 @@ public class PaymentServiceImp implements PaymentService {
 
         return paymentRepository.save(payment);
     }
+
 
     @Override
     public Payment getPaymentDetail(Integer id) {

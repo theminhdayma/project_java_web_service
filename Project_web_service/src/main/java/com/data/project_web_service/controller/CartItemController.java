@@ -85,4 +85,20 @@ public class CartItemController {
         cartItemService.deleteCartItem(id, userId);
         return ResponseEntity.ok(new APIResponse<>(true, "Xóa sản phẩm khỏi giỏ hàng thành công", null, HttpStatus.OK, null, LocalDateTime.now()));
     }
+
+    @DeleteMapping("/clear")
+    public ResponseEntity<APIResponse<String>> clearCart(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new APIResponse<>(false, "Chưa đăng nhập", null, HttpStatus.UNAUTHORIZED, null, LocalDateTime.now()));
+        }
+
+        Integer userId = userRepository.findByUsername(userDetails.getUsername()).getId();
+
+        cartItemService.deleteAllByUserId(userId);
+
+        return ResponseEntity.ok(new APIResponse<>(true, "Đã xóa toàn bộ giỏ hàng", null, null, null, LocalDateTime.now()));
+    }
 }

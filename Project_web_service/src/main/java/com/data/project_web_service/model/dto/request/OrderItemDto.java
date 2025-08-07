@@ -15,12 +15,8 @@ public class OrderItemDto {
 
     private Integer id;
 
-    @NotNull(message = "Số lượng không được để trống")
-    @Positive(message = "Số lượng phải lớn hơn 0")
     private Integer quantity;
 
-    @NotNull(message = "Giá không được để trống")
-    @Positive(message = "Giá phải lớn hơn 0")
     private BigDecimal price;
 
     private Integer orderId;

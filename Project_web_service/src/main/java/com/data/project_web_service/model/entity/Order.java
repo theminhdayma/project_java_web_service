@@ -40,12 +40,12 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "order")
-    @JsonIgnore
     private List<OrderItem> orderItems;
 
     @OneToMany(mappedBy = "order")

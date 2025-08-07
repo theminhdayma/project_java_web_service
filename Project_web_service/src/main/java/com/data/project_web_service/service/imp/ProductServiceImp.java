@@ -1,6 +1,7 @@
 package com.data.project_web_service.service.imp;
 
 import com.data.project_web_service.model.dto.request.ProductDto;
+import com.data.project_web_service.model.dto.request.UpdateProductDto;
 import com.data.project_web_service.model.dto.response.PagedResponse;
 import com.data.project_web_service.model.dto.response.Pagination;
 import com.data.project_web_service.model.entity.Category;
@@ -50,15 +51,15 @@ public class ProductServiceImp implements ProductService {
     }
 
     @Override
-    public Product updateProduct(Integer id, ProductDto productDto) {
+    public Product updateProduct(Integer id, UpdateProductDto updateProductDto) {
         Product product = getProductById(id);
 
-        Category category = categoryRepository.findById(productDto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với id: " + productDto.getCategoryId()));
+        Category category = categoryRepository.findById(updateProductDto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với id: " + updateProductDto.getCategoryId()));
 
-        product.setName(productDto.getName());
-        product.setDescription(productDto.getDescription());
-        product.setPrice(productDto.getPrice());
+        product.setName(updateProductDto.getName());
+        product.setDescription(updateProductDto.getDescription());
+        product.setPrice(updateProductDto.getPrice());
         product.setCategory(category);
 
         product.setUpdatedAt(LocalDate.now());
@@ -81,14 +82,10 @@ public class ProductServiceImp implements ProductService {
     }
 
     @Override
-    public PagedResponse<Product> getAllProducts(int page, int size, Integer categoryId, String search) {
+    public PagedResponse<Product> getAllProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
-        if (search != null) {
-            search = search.toLowerCase();
-        }
-
-        Page<Product> productPage = productRepository.searchProducts(categoryId, search, pageable);
+        Page<Product> productPage = productRepository.findAllActiveProducts(pageable);
 
         Pagination pagination = new Pagination(
                 productPage.getNumber(),

@@ -33,6 +33,9 @@ public class OrderServiceImp implements OrderService {
     @Autowired
     private CartItemService cartItemService;
 
+    @Autowired
+    private ProductRepository productRepository;
+
     @Override
     public PagedResponse<Order> getOrders(Pageable pageable, String username, boolean isAdminOrSales) {
         Page<Order> orderPage;
@@ -62,51 +65,74 @@ public class OrderServiceImp implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với id: " + orderId));
 
         if (!isAdminOrSales) {
-            // Kiểm tra đơn hàng của user hiện tại
             if (!order.getUser().getUsername().equals(username)) {
-                throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
+                throw new RuntimeException("Bạn không có đơn hàng này");
             }
         }
-
-        // Nếu cần, bạn có thể lấy orderItems kèm theo vì field orderItems là @OneToMany và fetch LAZY
-        // Thường gọi order.getOrderItems() khi cần
         return order;
     }
 
     @Override
     public Order createOrder(OrderDto orderDto, String username) {
+        // Lấy user
         User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new RuntimeException("Không tìm thấy người dùng");
         }
 
-        // Tạo đơn hàng mới
+        // Lấy giỏ hàng
+        List<CartItem> cartItems = cartItemService.findAllByUserId(user.getId());
+
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("Giỏ hàng của bạn đang trống");
+        }
+
+        // Kiểm tra tồn kho
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            if (product.getStock() < cartItem.getQuantity()) {
+                throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ tồn kho");
+            }
+        }
+
+        // Tính tổng tiền
+        BigDecimal totalOrderPrice = cartItems.stream()
+                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Tạo order mới
         Order order = Order.builder()
                 .user(user)
                 .shippingAddress(orderDto.getShippingAddress())
                 .internalNote(orderDto.getInternalNote())
-                .totalPrice(orderDto.getTotalPrice())
+                .totalPrice(totalOrderPrice)
                 .status(Order.OrderStatus.PENDING)
                 .build();
 
         order = orderRepository.save(order);
 
-        // Lấy danh sách giỏ hàng của user từ CartItemService
-        List<CartItem> cartItems = cartItemService.findAllByUserId(user.getId());
-
-        // Tạo các order item tương ứng
+        // Tạo order items, trừ tồn kho sản phẩm
         for (CartItem cartItem : cartItems) {
             Product product = cartItem.getProduct();
+
+            // Trừ stock
+            int newStock = product.getStock() - cartItem.getQuantity();
+            product.setStock(newStock);
+            // Cập nhật thời gian cập nhật nếu cần
+            product.setUpdatedAt(LocalDate.now());
+            productRepository.save(product);
+
+            // Tạo OrderItem
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(product)
                     .quantity(cartItem.getQuantity())
-                    .price(product.getPrice())   // giá sản phẩm tại thời điểm bán
+                    .price(product.getPrice())
                     .build();
             orderItemRepository.save(orderItem);
         }
 
-        // Xóa toàn bộ giỏ hàng của user sau khi tạo order
+        // Xóa giỏ hàng sau khi tạo order
         cartItemService.deleteAllByUserId(user.getId());
 
         return order;
@@ -144,22 +170,18 @@ public class OrderServiceImp implements OrderService {
     public void cancelOrder(Integer orderId, String reason) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với id: " + orderId));
-        // Set trạng thái
         order.setStatus(Order.OrderStatus.CANCELLED);
         order.setUpdatedAt(LocalDate.now());
         orderRepository.save(order);
 
-        // Restore stock
         List<OrderItem> orderItems = order.getOrderItems();
         if (orderItems != null) {
             for (OrderItem item : orderItems) {
                 Product product = item.getProduct();
                 product.setStock(product.getStock() + item.getQuantity());
-                // cần save product nếu JPA không cascade tự động
             }
         }
 
-        // Log reason (nếu có thể, lưu vào table khác hoặc order.internalNote)
         if (reason != null && !reason.isBlank()) {
             order.setInternalNote(
                     (order.getInternalNote() != null ? order.getInternalNote() + "\n" : "") +
@@ -168,6 +190,4 @@ public class OrderServiceImp implements OrderService {
             orderRepository.save(order);
         }
     }
-
-
 }

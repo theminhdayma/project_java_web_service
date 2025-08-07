@@ -10,14 +10,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
-
-    @Query("SELECT p FROM Product p " +
-            "WHERE p.isDeleted = false " +
-            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
-            "AND (:search IS NULL OR LOWER(p.name) LIKE %:search%)")
-    Page<Product> searchProducts(@Param("categoryId") Integer categoryId,
-                                 @Param("search") String search,
-                                 Pageable pageable);
+    // lấy tất cả sản phẩm có trạng thái là true
+    @Query("SELECT p FROM Product p WHERE p.isDeleted = false")
+    Page<Product> findAllActiveProducts(Pageable pageable);
 
     boolean existsByIdAndOrderItemsIsNotNull(Integer productId);
 }

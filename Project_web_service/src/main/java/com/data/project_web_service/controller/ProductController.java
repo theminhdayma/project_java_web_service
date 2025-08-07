@@ -1,6 +1,7 @@
 package com.data.project_web_service.controller;
 
 import com.data.project_web_service.model.dto.request.ProductDto;
+import com.data.project_web_service.model.dto.request.UpdateProductDto;
 import com.data.project_web_service.model.dto.response.APIResponse;
 import com.data.project_web_service.model.dto.response.PagedResponse;
 import com.data.project_web_service.model.entity.Product;
@@ -23,11 +24,9 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<APIResponse<PagedResponse<Product>>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "3") int size,
-            @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) String search
+            @RequestParam(defaultValue = "3") int size
     ) {
-        PagedResponse<Product> products = productService.getAllProducts(page, size, categoryId, search);
+        PagedResponse<Product> products = productService.getAllProducts(page, size);
         APIResponse<PagedResponse<Product>> response = new APIResponse<>(
                 true,
                 "Lấy danh sách sản phẩm thành công",
@@ -69,8 +68,8 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<APIResponse<Product>> updateProduct(@PathVariable Integer id,
-                                                              @Valid @RequestBody ProductDto productDto) {
-        Product updated = productService.updateProduct(id, productDto);
+                                                              @Valid @RequestBody UpdateProductDto updateProductDto) {
+        Product updated = productService.updateProduct(id, updateProductDto);
         APIResponse<Product> response = new APIResponse<>(
                 true,
                 "Cập nhật sản phẩm thành công",

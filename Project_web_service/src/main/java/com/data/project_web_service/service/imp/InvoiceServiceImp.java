@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
@@ -51,13 +52,21 @@ public class InvoiceServiceImp implements InvoiceService {
         Order order = orderRepository.findById(dto.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với id: " + dto.getOrderId()));
 
+        BigDecimal totalAmount = order.getTotalPrice();
+
+        if (totalAmount == null) {
+            throw new RuntimeException("Đơn hàng chưa có tổng tiền hợp lệ");
+        }
+
         Invoice invoice = Invoice.builder()
                 .order(order)
-                .totalAmount(dto.getTotalAmount())
+                .totalAmount(totalAmount)
                 .status(Invoice.InvoiceStatus.UNPAID)
                 .build();
+
         return invoiceRepository.save(invoice);
     }
+
 
     @Override
     public Invoice updateInvoiceStatus(Integer id, Invoice.InvoiceStatus status) {

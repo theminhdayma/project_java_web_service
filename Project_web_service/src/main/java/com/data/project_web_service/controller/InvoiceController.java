@@ -22,12 +22,11 @@ public class InvoiceController {
     @Autowired
     private InvoiceService invoiceService;
 
-    // GET /api/v1/invoices - lấy danh sách hóa đơn, có phân trang
     @GetMapping
     public ResponseEntity<APIResponse<PagedResponse<Invoice>>> getInvoices(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "3") int size) {
 
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
@@ -45,7 +44,6 @@ public class InvoiceController {
         return ResponseEntity.ok(new APIResponse<>(true, "Lấy danh sách hóa đơn thành công", invoices, HttpStatus.OK, null, LocalDateTime.now()));
     }
 
-    // GET /api/v1/invoices/{id} - lấy chi tiết hóa đơn
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<Invoice>> getInvoiceDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -65,7 +63,6 @@ public class InvoiceController {
         return ResponseEntity.ok(new APIResponse<>(true, "Chi tiết hóa đơn", invoice, HttpStatus.OK, null, LocalDateTime.now()));
     }
 
-    // POST /api/v1/invoices - tạo hóa đơn từ order
     @PostMapping
     public ResponseEntity<APIResponse<Invoice>> createInvoice(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -86,7 +83,6 @@ public class InvoiceController {
                 .body(new APIResponse<>(true, "Tạo hóa đơn thành công", invoice, HttpStatus.CREATED, null, LocalDateTime.now()));
     }
 
-    // PUT /api/v1/invoices/{id}/status - cập nhật trạng thái hóa đơn
     @PutMapping("/{id}/status")
     public ResponseEntity<APIResponse<Invoice>> updateInvoiceStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -106,4 +102,26 @@ public class InvoiceController {
         Invoice invoice = invoiceService.updateInvoiceStatus(id, status);
         return ResponseEntity.ok(new APIResponse<>(true, "Cập nhật trạng thái hóa đơn thành công", invoice, HttpStatus.OK, null, LocalDateTime.now()));
     }
+
+    @GetMapping("/{orderId}/invoice")
+    public ResponseEntity<APIResponse<Invoice>> getInvoiceByOrderId(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Integer orderId) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    new APIResponse<>(false, "Chưa đăng nhập", null, HttpStatus.UNAUTHORIZED, null, LocalDateTime.now()));
+        }
+
+        boolean isAdminOrSales = userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN") || auth.getAuthority().equals("ROLE_SALES"));
+        if (!isAdminOrSales) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new APIResponse<>(false, "Bạn không có quyền truy cập hóa đơn theo order", null, HttpStatus.FORBIDDEN, null, LocalDateTime.now()));
+        }
+
+        Invoice invoice = invoiceService.getInvoiceByOrderId(orderId);
+        return ResponseEntity.ok(new APIResponse<>(true, "Lấy hóa đơn theo order thành công", invoice, HttpStatus.OK, null, LocalDateTime.now()));
+    }
+
 }

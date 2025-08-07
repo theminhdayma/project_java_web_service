@@ -39,7 +39,7 @@ public class Payment {
     @Column(name = "updated_at")
     private LocalDate updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
 

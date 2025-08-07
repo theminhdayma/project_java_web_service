@@ -79,9 +79,6 @@ public class OrderController {
                     new APIResponse<>(false, "Chưa đăng nhập", null, HttpStatus.UNAUTHORIZED, null, LocalDateTime.now()));
         }
 
-        // Bỏ userId trong orderDto, sử dụng username lấy userId thực tế ở service
-        orderDto.setUserId(null);
-
         Order order = orderService.createOrder(orderDto, userDetails.getUsername());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -175,7 +172,6 @@ public class OrderController {
 
         Order order = orderService.getOrderDetail(id, userDetails.getUsername(), isAdminOrSales);
 
-        // Nếu không phải admin/sales thì chỉ cho xem nếu là chủ đơn hàng
         if (!isAdminOrSales && !order.getUser().getUsername().equals(userDetails.getUsername())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                     new APIResponse<>(false, "Bạn không có quyền xem items của đơn hàng này", null, HttpStatus.FORBIDDEN, null, LocalDateTime.now()));
@@ -185,7 +181,6 @@ public class OrderController {
         return ResponseEntity.ok(new APIResponse<>(true, "Lấy danh sách sản phẩm trong đơn hàng thành công", items, HttpStatus.OK, null, LocalDateTime.now()));
     }
 
-    // GET /api/v1/orders/{orderId}/invoice - lấy invoice của một order cụ thể
     @GetMapping("/{orderId}/invoice")
     public ResponseEntity<APIResponse<Invoice>> getInvoiceByOrderId(
             @AuthenticationPrincipal CustomUserDetails userDetails,

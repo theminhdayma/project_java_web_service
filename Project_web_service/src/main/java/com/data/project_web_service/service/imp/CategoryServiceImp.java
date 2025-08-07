@@ -18,6 +18,11 @@ public class CategoryServiceImp implements CategoryService {
 
     @Override
     public Category createCategory(CategoryDto categoryDto) {
+
+        if (categoryRepository.existsByName(categoryDto.getName())) {
+            throw new RuntimeException("Danh mục với tên '" + categoryDto.getName() + "' đã tồn tại.");
+        }
+
         Category category = Category.builder()
                 .name(categoryDto.getName())
                 .description(categoryDto.getDescription())
@@ -30,6 +35,9 @@ public class CategoryServiceImp implements CategoryService {
     public Category updateCategory(Integer id, CategoryDto categoryDto) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với id: " + id));
+        if (categoryRepository.existsByName(categoryDto.getName())) {
+            throw new RuntimeException("Danh mục với tên '" + categoryDto.getName() + "' đã tồn tại.");
+        }
         category.setName(categoryDto.getName());
         category.setDescription(categoryDto.getDescription());
         return categoryRepository.save(category);

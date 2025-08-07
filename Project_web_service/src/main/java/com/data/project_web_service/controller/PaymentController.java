@@ -21,7 +21,6 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
-    // POST /api/v1/payments : Xử lý thanh toán cho hóa đơn (Customer)
     @PostMapping
     public ResponseEntity<APIResponse<Payment>> createPayment(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -37,9 +36,9 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new APIResponse<>(true, "Thanh toán thành công", payment, HttpStatus.CREATED, null, LocalDateTime.now())
         );
-    }
+        }
 
-    // GET /api/v1/payments/{id} : Lấy thông tin chi tiết payment (ADMIN, CUSTOMER, SALES)
+        // GET /api/v1/payments/{id} : Lấy thông tin chi tiết payment (ADMIN, CUSTOMER, SALES)
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<Payment>> getPaymentById(
             @AuthenticationPrincipal CustomUserDetails userDetails,

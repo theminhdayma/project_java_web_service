@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 public class InvoiceDto {
     private Integer id;
 
-    @NotBlank(message = "Tổng tiền đơn hàng không được để trống")
     private BigDecimal totalAmount;
 
     private Integer orderId;

@@ -19,11 +19,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
 
     Invoice findByOrder(Order order);
 
-    // Báo cáo tổng quan doanh số theo thời gian
     @Query("SELECT SUM(i.totalAmount) FROM Invoice i WHERE i.status = 'PAID' AND i.createdAt BETWEEN :startDate AND :endDate")
     BigDecimal sumRevenueInPeriod(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // Doanh thu nhóm theo tuần/tháng/quý (ví dụ lấy tổng theo tháng)
     @Query("SELECT FUNCTION('MONTH', i.createdAt) as month, SUM(i.totalAmount) as total " +
             "FROM Invoice i WHERE i.status = 'PAID' AND i.createdAt BETWEEN :startDate AND :endDate " +
             "GROUP BY FUNCTION('MONTH', i.createdAt)")
